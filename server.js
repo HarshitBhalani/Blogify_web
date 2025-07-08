@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const path = require('path'); 
 const cors = require('cors');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
