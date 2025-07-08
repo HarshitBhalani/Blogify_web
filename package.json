@@ -10,7 +10,7 @@
     "client": "cd client && npm start",
     "install-client": "cd client && npm install",
     "build": "cd client && npm run build",
-    "netlify-build": "npm run install-client && npm run build"
+    "render-build": "npm run install-client && npm run build"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
