@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
 
 // API routes
-app.use('/api', require('./routes/api'));
+// app.use('/api', require('./routes/api'));
 
 // Serve React app
 app.get('*', (req, res) => {
