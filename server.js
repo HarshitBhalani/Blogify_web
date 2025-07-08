@@ -15,6 +15,23 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // app.use(cors());
 // app.use(express.json());
 
+app.post('/api/generate', async (req, res) => {
+  try {
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    
+    const result = await model.generateContent(req.body.prompt);
+    const text = result.response.text();
+    
+    res.json({ content: text });
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 // Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
