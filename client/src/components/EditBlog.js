@@ -15,13 +15,18 @@ const EditBlog = () => {
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [fetchingBlog, setFetchingBlog] = useState(true);
 
+  // Dynamic API URL based on environment
+  const API_URL = process.env.NODE_ENV === 'production' 
+    ? '' // In production, use relative URLs
+    : 'http://localhost:5000';
+
   useEffect(() => {
     fetchBlog();
   }, [id]);
 
   const fetchBlog = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/blogs/${id}`);
+      const response = await axios.get(`${API_URL}/api/blogs/${id}`);
       const blog = response.data;
       setFormData({
         title: blog.title,
@@ -51,7 +56,7 @@ const EditBlog = () => {
 
     setGeneratingDescription(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/generate-description', {
+      const response = await axios.post(`${API_URL}/api/generate-description`, {
         title: formData.title
       });
       setFormData({
@@ -76,7 +81,7 @@ const EditBlog = () => {
 
     setLoading(true);
     try {
-      await axios.put(`http://localhost:5000/api/blogs/${id}`, formData);
+      await axios.put(`${API_URL}/api/blogs/${id}`, formData);
       navigate(`/blog/${id}`);
     } catch (error) {
       console.error('Error updating blog:', error);
