@@ -14,7 +14,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // Middleware - FIXED ORDER
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-render-app.onrender.com'] // Replace with your actual Render URL
+    ? ['https://blogify-web-szk9.onrender.com'] // Replace with your actual Render URL
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
@@ -335,7 +335,7 @@ app.get('/keep-alive', (req, res) => {
 
 // Self-ping function to keep server awake for render 
 function keepServerAlive() {
-    const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://blogify-web-szk9.onrender.com/';
+    const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://blogify-web-szk9.onrender.com';
     
     // Only run self-ping in production (on Render)
     if (process.env.NODE_ENV === 'production' && appUrl.includes('onrender.com')) {
