@@ -20,7 +20,12 @@ const App = () => {
     contentType: 'markdown'
   });
 
-  const API_URL = 'http://localhost:5000/api';
+  // Updated API URL configuration - moved to function to ensure consistent usage
+  const getAPIURL = () => {
+    return process.env.NODE_ENV === 'production' 
+      ? '/api'  // Use relative path in production
+      : 'http://localhost:5000/api';  // Use localhost in development
+  };
 
   // Simple markdown to HTML converter
   const convertMarkdownToHTML = (markdown) => {
@@ -86,26 +91,24 @@ const App = () => {
   };
 
   // Fetch all blogs
-const fetchBlogs = async () => {
-  try {
-    const API_URL = process.env.NODE_ENV === 'production' 
-      ? '/api'  // Use relative path in production
-      : 'http://localhost:5000/api';  // Use localhost in development
-    
-    const response = await fetch(`${API_URL}/blogs`);
-    const data = await response.json();
-    setBlogs(data);
-    setLoading(false);
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    setLoading(false);
-  }
-};
+  const fetchBlogs = async () => {
+    try {
+      const API_URL = getAPIURL();
+      const response = await fetch(`${API_URL}/blogs`);
+      const data = await response.json();
+      setBlogs(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+      setLoading(false);
+    }
+  };
 
-  // Generate AI content with improved states
+  // Generate AI content with improved states - FIXED API URL
   const generateAIContent = async (title) => {
     setIsGeneratingAI(true);
     try {
+      const API_URL = getAPIURL(); // Use the same API URL logic
       const response = await fetch(`${API_URL}/generate-content`, {
         method: 'POST',
         headers: {
@@ -113,6 +116,11 @@ const fetchBlogs = async () => {
         },
         body: JSON.stringify({ title }),
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       // Show success state
@@ -122,6 +130,7 @@ const fetchBlogs = async () => {
       return data.content;
     } catch (error) {
       console.error('Error generating AI content:', error);
+      alert('Failed to generate AI content. Please try again.');
       return '';
     } finally {
       setIsGeneratingAI(false);
@@ -133,6 +142,7 @@ const fetchBlogs = async () => {
     e.preventDefault();
     
     try {
+      const API_URL = getAPIURL();
       const url = editingBlog 
         ? `${API_URL}/blogs/${editingBlog._id}`
         : `${API_URL}/blogs`;
@@ -162,6 +172,7 @@ const fetchBlogs = async () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this blog?')) {
       try {
+        const API_URL = getAPIURL();
         await fetch(`${API_URL}/blogs/${id}`, {
           method: 'DELETE',
         });
@@ -241,7 +252,7 @@ const fetchBlogs = async () => {
         justifyContent: 'space-between', 
         alignItems: 'center' 
       }}>
-        <h1 style={{ margin: 0, fontSize: '28px' }}> Blogify</h1>
+        <h1 style={{ margin: 0, fontSize: '28px' }}>📝 Blogify</h1>
         <button 
           onClick={() => {
             setShowCreateForm(true);
@@ -258,7 +269,7 @@ const fetchBlogs = async () => {
             fontSize: '16px'
           }}
         >
-           Create New Blog
+          ✏️ Create New Blog
         </button>
       </header>
 
@@ -311,7 +322,7 @@ const fetchBlogs = async () => {
                   cursor: 'pointer'
                 }}
               >
-                 Edit
+                ✏️ Edit
               </button>
               <button 
                 onClick={() => handleDelete(selectedBlog._id)}
@@ -324,7 +335,7 @@ const fetchBlogs = async () => {
                   cursor: 'pointer'
                 }}
               >
-                 Delete
+                🗑️ Delete
               </button>
             </div>
             
@@ -551,7 +562,7 @@ const fetchBlogs = async () => {
                       fontSize: '16px'
                     }}
                   >
-                    {editingBlog ? ' Update Blog' : ' Create Blog'}
+                    {editingBlog ? '📝 Update Blog' : '📝 Create Blog'}
                   </button>
                   <button 
                     type="button" 
