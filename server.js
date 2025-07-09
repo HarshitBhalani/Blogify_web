@@ -320,3 +320,62 @@ app.listen(PORT, () => {
   console.log(`MongoDB connected: ${mongoose.connection.readyState === 1}`);
   console.log(`Enhanced features: Markdown support, Rich content generation`);
 });
+
+
+// Add this code to your existing server.js file
+
+// Keep-alive endpoint (add this after your other routes)
+app.get('/keep-alive', (req, res) => {
+    res.status(200).json({ 
+        message: 'Server is alive!', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
+
+// Self-ping function to keep server awake for render 
+function keepServerAlive() {
+    const appUrl = process.env.RENDER_EXTERNAL_URL || 'https://blogify-web-szk9.onrender.com/';
+    
+    // Only run self-ping in production (on Render)
+    if (process.env.NODE_ENV === 'production' && appUrl.includes('onrender.com')) {
+        setInterval(() => {
+            const https = require('https');
+            
+            const options = {
+                hostname: new URL(appUrl).hostname,
+                port: 443,
+                path: '/keep-alive',
+                method: 'GET',
+                timeout: 10000
+            };
+            
+            const req = https.request(options, (res) => {
+                console.log(`✅ Self-ping successful: ${res.statusCode} at ${new Date().toISOString()}`);
+                res.on('data', () => {}); // Consume response data
+            });
+            
+            req.on('error', (err) => {
+                console.error(`❌ Self-ping failed: ${err.message}`);
+            });
+            
+            req.on('timeout', () => {
+                console.error(`⏰ Self-ping timeout`);
+                req.abort();
+            });
+            
+            req.end();
+        }, 5 * 60 * 1000); // 5 minutes
+        
+        console.log('🔄 Keep-alive self-ping started (every 5 minutes)');
+    }
+}
+
+// Start keep-alive after server starts
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    
+    // Start keep-alive mechanism
+    keepServerAlive();
+});
