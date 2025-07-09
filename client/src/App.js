@@ -86,20 +86,21 @@ const App = () => {
   };
 
   // Fetch all blogs
-  const fetchBlogs = async () => {
-    try {
-      // const response = await fetch(`${API_URL}/blogs`);
-      const API_URL = process.env.NODE_ENV === 'production' 
+const API_URL = process.env.NODE_ENV === 'production' 
   ? '/api'  // Use relative path in production
   : 'http://localhost:5000/api';  // Use localhost in development
-      const data = await response.json();
-      setBlogs(data);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching blogs:', error);
-      setLoading(false);
-    }
-  };
+
+const fetchBlogs = async () => {
+  try {
+    const response = await fetch(`${API_URL}/blogs`);
+    const data = await response.json();
+    setBlogs(data);
+    setLoading(false);
+  } catch (error) {
+    console.error('Error fetching blogs:', error);
+    setLoading(false);
+  }
+};
 
   // Generate AI content with improved states
   const generateAIContent = async (title) => {
