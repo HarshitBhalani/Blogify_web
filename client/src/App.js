@@ -86,12 +86,12 @@ const App = () => {
   };
 
   // Fetch all blogs
-const API_URL = process.env.NODE_ENV === 'production' 
-  ? '/api'  // Use relative path in production
-  : 'http://localhost:5000/api';  // Use localhost in development
-
 const fetchBlogs = async () => {
   try {
+    const API_URL = process.env.NODE_ENV === 'production' 
+      ? '/api'  // Use relative path in production
+      : 'http://localhost:5000/api';  // Use localhost in development
+    
     const response = await fetch(`${API_URL}/blogs`);
     const data = await response.json();
     setBlogs(data);
