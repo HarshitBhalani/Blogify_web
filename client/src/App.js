@@ -307,7 +307,7 @@ const App = () => {
             transition: 'background-color 0.3s'
           }}
         >
-          ✏️ Create New Blog
+           Create New Blog
         </button>
       </header>
 
@@ -445,7 +445,7 @@ const App = () => {
                   transition: 'background-color 0.3s'
                 }}
               >
-                ✏️ Edit
+                 Edit
               </button>
               <button 
                 onClick={() => handleDelete(selectedBlog._id)}
@@ -460,7 +460,7 @@ const App = () => {
                   transition: 'background-color 0.3s'
                 }}
               >
-                🗑️ Delete
+                 Delete
               </button>
             </div>
             
@@ -652,7 +652,7 @@ const App = () => {
               color: '#2c3e50',
               fontSize: '24px'
             }}>
-              {editingBlog ? '✏️ Edit Blog' : '📝 Create New Blog'}
+              {editingBlog ? ' Edit Blog' : ' Create New Blog'}
             </h2>
             
             <form onSubmit={handleSubmit}>
@@ -815,7 +815,7 @@ const App = () => {
                     fontSize: '16px'
                   }}
                 >
-                  {editingBlog ? '📝 Update Blog' : '📝 Create Blog'}
+                  {editingBlog ? ' Update Blog' : ' Create Blog'}
                 </button>
                 <button 
                   type="button" 
