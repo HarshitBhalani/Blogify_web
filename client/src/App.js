@@ -464,8 +464,7 @@ const App = () => {
               </button>
                    // back to blogs button
                    {showBlogDetail && (
-            <button 
-              onClick={() => setShowBlogDetail(false)}
+              <button onClick={() => setShowBlogDetail(false)}
               style={{
                 backgroundColor: '#34495e',
                 color: 'white',
@@ -474,11 +473,10 @@ const App = () => {
                 borderRadius: '5px',
                 cursor: 'pointer',
                 fontSize: '14px'
-              }}
-            >
+              }}>
               ← Blogs
             </button>
-          )}
+              )}
             </div>
             
             {/* Blog Title */}
