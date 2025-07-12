@@ -273,22 +273,22 @@ const App = () => {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <h1 style={{ margin: 0, fontSize: '28px' }}>📝 Blogify</h1>
-          // {showBlogDetail && (
-          //   <button 
-          //     onClick={() => setShowBlogDetail(false)}
-          //     style={{
-          //       backgroundColor: '#34495e',
-          //       color: 'white',
-          //       border: 'none',
-          //       padding: '8px 15px',
-          //       borderRadius: '5px',
-          //       cursor: 'pointer',
-          //       fontSize: '14px'
-          //     }}
-          //   >
-          //     ← Blogs
-          //   </button>
-          // )}
+          {/* {showBlogDetail && (
+            <button 
+              onClick={() => setShowBlogDetail(false)}
+              style={{
+                backgroundColor: '#34495e',
+                color: 'white',
+                border: 'none',
+                padding: '8px 15px',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              ← Blogs
+            </button>
+          )} */}
         </div>
         <button 
           onClick={() => {
