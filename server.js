@@ -314,9 +314,30 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
+// for render server alive
+const RENDER_URL = 'https://blogify-web-szk9.onrender.com';
+
+// Keep-alive function
+const keepAlive = () => {
+  setInterval(async () => {
+    try {
+      const response = await fetch(`${RENDER_URL}/api/health`);
+      console.log(`Keep-alive ping: ${response.status}`);
+    } catch (error) {
+      console.error('Keep-alive failed:', error.message);
+    }
+  }, 14 * 60 * 1000); // Ping every 14 minutes
+};
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'Server is alive', timestamp: new Date().toISOString() });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Gemini API configured: ${!!process.env.GEMINI_API_KEY}`);
   console.log(`MongoDB connected: ${mongoose.connection.readyState === 1}`);
   console.log(`Enhanced features: Markdown support, Rich content generation`);
+  keepAlive(); // Start the keep-alive service
 });
