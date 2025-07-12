@@ -6,6 +6,7 @@ const App = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showBlogDetail, setShowBlogDetail] = useState(false);
   
   // AI Button states
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -20,11 +21,15 @@ const App = () => {
     contentType: 'markdown'
   });
 
-  // Updated API URL configuration - moved to function to ensure consistent usage
+  useEffect(() => {
+  fetchBlogs();
+}, []);
+
+  // Updated API URL configuration
   const getAPIURL = () => {
     return process.env.NODE_ENV === 'production' 
-      ? '/api'  // Use relative path in production
-      : 'http://localhost:5000/api';  // Use localhost in development
+      ? '/api'
+      : 'http://localhost:5000/api';
   };
 
   // Simple markdown to HTML converter
@@ -104,11 +109,11 @@ const App = () => {
     }
   };
 
-  // Generate AI content with improved states - FIXED API URL
+  // Generate AI content
   const generateAIContent = async (title) => {
     setIsGeneratingAI(true);
     try {
-      const API_URL = getAPIURL(); // Use the same API URL logic
+      const API_URL = getAPIURL();
       const response = await fetch(`${API_URL}/generate-content`, {
         method: 'POST',
         headers: {
@@ -123,7 +128,6 @@ const App = () => {
       
       const data = await response.json();
       
-      // Show success state
       setAIGenerateSuccess(true);
       setTimeout(() => setAIGenerateSuccess(false), 2000);
       
@@ -178,6 +182,7 @@ const App = () => {
         });
         fetchBlogs();
         setSelectedBlog(null);
+        setShowBlogDetail(false);
       } catch (error) {
         console.error('Error deleting blog:', error);
       }
@@ -208,6 +213,13 @@ const App = () => {
       contentType: blog.contentType || 'markdown'
     });
     setShowCreateForm(true);
+    setShowBlogDetail(false);
+  };
+
+  // Handle blog click
+  const handleBlogClick = (blog) => {
+    setSelectedBlog(blog);
+    setShowBlogDetail(true);
   };
 
   // Handle AI content generation
@@ -223,14 +235,20 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
-
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '18px' }}>
-        Loading blogs...
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh', 
+        fontSize: '18px',
+        backgroundColor: '#f5f5f5'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>📝</div>
+          <div>Loading blogs...</div>
+        </div>
       </div>
     );
   }
@@ -250,9 +268,28 @@ const App = () => {
         padding: '20px', 
         display: 'flex', 
         justifyContent: 'space-between', 
-        alignItems: 'center' 
+        alignItems: 'center',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}>
-        <h1 style={{ margin: 0, fontSize: '28px' }}>📝 Blogify</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h1 style={{ margin: 0, fontSize: '28px' }}>📝 Blogify</h1>
+          {showBlogDetail && (
+            <button 
+              onClick={() => setShowBlogDetail(false)}
+              style={{
+                backgroundColor: '#34495e',
+                color: 'white',
+                border: 'none',
+                padding: '8px 15px',
+                borderRadius: '5px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              ← Back to Grid
+            </button>
+          )}
+        </div>
         <button 
           onClick={() => {
             setShowCreateForm(true);
@@ -266,60 +303,146 @@ const App = () => {
             padding: '10px 20px',
             borderRadius: '5px',
             cursor: 'pointer',
-            fontSize: '16px'
+            fontSize: '16px',
+            transition: 'background-color 0.3s'
           }}
         >
           ✏️ Create New Blog
         </button>
       </header>
 
-      <div style={{ display: 'flex', gap: '20px', padding: '20px' }}>
-        {/* Blog List */}
-        <div style={{ flex: '1', backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ marginTop: 0, color: '#2c3e50' }}>All Blogs ({blogs.length})</h2>
+      {/* Main Content */}
+      {!showBlogDetail ? (
+        // Grid View
+        <div style={{ padding: '20px' }}>
+          <h2 style={{ 
+            marginBottom: '20px', 
+            color: '#2c3e50',
+            textAlign: 'center',
+            fontSize: '24px'
+          }}>
+            All Blogs ({blogs.length})
+          </h2>
+          
           {blogs.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#7f8c8d', fontSize: '16px' }}>
-              No blogs yet. Create your first blog! 🚀
-            </p>
+            <div style={{ 
+              textAlign: 'center', 
+              color: '#7f8c8d', 
+              fontSize: '18px',
+              padding: '60px 20px'
+            }}>
+              <div style={{ fontSize: '64px', marginBottom: '20px' }}>📝</div>
+              <div>No blogs yet. Create your first blog! 🚀</div>
+            </div>
           ) : (
-            blogs.map(blog => (
-              <div 
-                key={blog._id} 
-                onClick={() => setSelectedBlog(blog)}
-                style={{
-                  border: selectedBlog?._id === blog._id ? '2px solid #3498db' : '1px solid #ecf0f1',
-                  borderRadius: '8px',
-                  padding: '15px',
-                  marginBottom: '10px',
-                  cursor: 'pointer',
-                  backgroundColor: selectedBlog?._id === blog._id ? '#ebf3fd' : '#fafafa',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <h3 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>{blog.title}</h3>
-                <p style={{ margin: '0 0 10px 0', color: '#7f8c8d', fontSize: '14px' }}>{blog.description}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#95a5a6' }}>
-                  <span>📝 By {blog.author}</span>
-                  <span>📅 {new Date(blog.createdAt).toLocaleDateString()}</span>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+              gap: '20px',
+              maxWidth: '1200px',
+              margin: '0 auto'
+            }}>
+              {blogs.map(blog => (
+                <div 
+                  key={blog._id} 
+                  onClick={() => handleBlogClick(blog)}
+                  style={{
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                    transition: 'all 0.3s ease',
+                    border: '1px solid #e1e8ed',
+                    height: 'fit-content'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-5px)';
+                    e.currentTarget.style.boxShadow = '0 8px 15px rgba(0,0,0,0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+                  }}
+                >
+                  <h3 style={{ 
+                    margin: '0 0 15px 0', 
+                    color: '#2c3e50',
+                    fontSize: '20px',
+                    lineHeight: '1.3'
+                  }}>
+                    {blog.title}
+                  </h3>
+                  
+                  <p style={{ 
+                    margin: '0 0 20px 0', 
+                    color: '#7f8c8d', 
+                    fontSize: '14px',
+                    lineHeight: '1.5',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}>
+                    {blog.description}
+                  </p>
+                  
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    fontSize: '12px', 
+                    color: '#95a5a6',
+                    paddingTop: '15px',
+                    borderTop: '1px solid #ecf0f1'
+                  }}>
+                    <span style={{ 
+                      backgroundColor: '#ecf0f1',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px'
+                    }}>
+                      📝 {blog.author}
+                    </span>
+                    <span>
+                      📅 {new Date(blog.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
-
-        {/* Blog Detail */}
-        {selectedBlog && (
-          <div style={{ flex: '2', backgroundColor: 'white', borderRadius: '8px', padding: '20px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      ) : (
+        // Blog Detail View (Full Page)
+        <div style={{ 
+          backgroundColor: 'white', 
+          minHeight: 'calc(100vh - 80px)',
+          padding: '40px'
+        }}>
+          <div style={{ 
+            maxWidth: '800px', 
+            margin: '0 auto'
+          }}>
+            {/* Blog Actions */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '10px', 
+              marginBottom: '30px',
+              paddingBottom: '20px',
+              borderBottom: '1px solid #ecf0f1'
+            }}>
               <button 
                 onClick={() => handleEdit(selectedBlog)}
                 style={{
                   backgroundColor: '#f39c12',
                   color: 'white',
                   border: 'none',
-                  padding: '8px 15px',
+                  padding: '10px 20px',
                   borderRadius: '5px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  transition: 'background-color 0.3s'
                 }}
               >
                 ✏️ Edit
@@ -330,37 +453,83 @@ const App = () => {
                   backgroundColor: '#e74c3c',
                   color: 'white',
                   border: 'none',
-                  padding: '8px 15px',
+                  padding: '10px 20px',
                   borderRadius: '5px',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  transition: 'background-color 0.3s'
                 }}
               >
                 🗑️ Delete
               </button>
             </div>
             
-            <h1 style={{ color: '#2c3e50', marginBottom: '15px' }}>{selectedBlog.title}</h1>
+            {/* Blog Title */}
+            <h1 style={{ 
+              color: '#2c3e50', 
+              marginBottom: '20px',
+              fontSize: '36px',
+              lineHeight: '1.2'
+            }}>
+              {selectedBlog.title}
+            </h1>
             
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', fontSize: '14px', color: '#7f8c8d' }}>
-              <span>📝 By {selectedBlog.author}</span>
-              <span>📅 {new Date(selectedBlog.createdAt).toLocaleDateString()}</span>
+            {/* Blog Meta */}
+            <div style={{ 
+              display: 'flex', 
+              gap: '20px', 
+              marginBottom: '30px', 
+              fontSize: '14px', 
+              color: '#7f8c8d',
+              flexWrap: 'wrap'
+            }}>
+              <span style={{ 
+                backgroundColor: '#ecf0f1',
+                padding: '6px 12px',
+                borderRadius: '15px'
+              }}>
+                📝 By {selectedBlog.author}
+              </span>
+              <span style={{ 
+                backgroundColor: '#ecf0f1',
+                padding: '6px 12px',
+                borderRadius: '15px'
+              }}>
+                📅 {new Date(selectedBlog.createdAt).toLocaleDateString()}
+              </span>
               {selectedBlog.updatedAt !== selectedBlog.createdAt && (
-                <span>🔄 Updated: {new Date(selectedBlog.updatedAt).toLocaleDateString()}</span>
+                <span style={{ 
+                  backgroundColor: '#ecf0f1',
+                  padding: '6px 12px',
+                  borderRadius: '15px'
+                }}>
+                  🔄 Updated: {new Date(selectedBlog.updatedAt).toLocaleDateString()}
+                </span>
               )}
             </div>
             
+            {/* Blog Description */}
             <div style={{ 
               backgroundColor: '#f8f9fa', 
-              padding: '15px', 
-              borderRadius: '5px', 
-              marginBottom: '20px',
+              padding: '20px', 
+              borderRadius: '8px', 
+              marginBottom: '30px',
               borderLeft: '4px solid #3498db'
             }}>
-              <p style={{ margin: 0, fontStyle: 'italic', color: '#5a6c7d' }}>{selectedBlog.description}</p>
+              <p style={{ 
+                margin: 0, 
+                fontStyle: 'italic', 
+                color: '#5a6c7d',
+                fontSize: '16px',
+                lineHeight: '1.5'
+              }}>
+                {selectedBlog.description}
+              </p>
             </div>
             
+            {/* Blog Content */}
             <div style={{ 
-              lineHeight: '1.6', 
+              lineHeight: '1.8', 
               color: '#2c3e50',
               fontSize: '16px'
             }}>
@@ -371,224 +540,307 @@ const App = () => {
                     : selectedBlog.content.replace(/\n/g, '<br>')
                 }} 
                 style={{
-                  '& h1': { color: '#2c3e50', borderBottom: '2px solid #3498db', paddingBottom: '10px' },
-                  '& h2': { color: '#34495e', borderBottom: '1px solid #bdc3c7', paddingBottom: '5px' },
-                  '& h3': { color: '#5a6c7d' },
+                  '& h1': { 
+                    color: '#2c3e50', 
+                    borderBottom: '2px solid #3498db', 
+                    paddingBottom: '10px',
+                    marginTop: '30px',
+                    marginBottom: '20px'
+                  },
+                  '& h2': { 
+                    color: '#34495e', 
+                    borderBottom: '1px solid #bdc3c7', 
+                    paddingBottom: '5px',
+                    marginTop: '25px',
+                    marginBottom: '15px'
+                  },
+                  '& h3': { 
+                    color: '#5a6c7d',
+                    marginTop: '20px',
+                    marginBottom: '10px'
+                  },
+                  '& p': {
+                    marginBottom: '15px'
+                  },
                   '& blockquote': { 
                     backgroundColor: '#f8f9fa', 
                     borderLeft: '4px solid #3498db', 
                     margin: '20px 0', 
                     padding: '15px',
-                    borderRadius: '0 5px 5px 0'
+                    borderRadius: '0 5px 5px 0',
+                    fontStyle: 'italic'
                   },
                   '& code': { 
                     backgroundColor: '#f1f2f6', 
-                    padding: '2px 5px', 
+                    padding: '2px 6px', 
                     borderRadius: '3px',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    fontFamily: 'monospace'
                   },
                   '& pre': { 
                     backgroundColor: '#2c3e50', 
                     color: 'white', 
                     padding: '15px', 
                     borderRadius: '5px',
-                    overflow: 'auto'
+                    overflow: 'auto',
+                    fontSize: '14px',
+                    margin: '20px 0'
                   },
-                  '& a': { color: '#3498db', textDecoration: 'none' },
-                  '& ul, & ol': { paddingLeft: '20px' },
-                  '& li': { marginBottom: '5px' }
+                  '& a': { 
+                    color: '#3498db', 
+                    textDecoration: 'none'
+                  },
+                  '& ul, & ol': { 
+                    paddingLeft: '20px',
+                    marginBottom: '15px'
+                  },
+                  '& li': { 
+                    marginBottom: '5px'
+                  },
+                  '& hr': {
+                    border: 'none',
+                    height: '1px',
+                    backgroundColor: '#ecf0f1',
+                    margin: '30px 0'
+                  },
+                  '& table': {
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    margin: '20px 0'
+                  },
+                  '& th, & td': {
+                    border: '1px solid #ecf0f1',
+                    padding: '8px 12px',
+                    textAlign: 'left'
+                  },
+                  '& th': {
+                    backgroundColor: '#f8f9fa',
+                    fontWeight: 'bold'
+                  }
                 }}
               />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Create/Edit Form */}
-        {showCreateForm && (
+      {/* Create/Edit Form Modal */}
+      {showCreateForm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
           <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 1000
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '10px',
+            width: '90%',
+            maxWidth: '800px',
+            maxHeight: '90vh',
+            overflow: 'auto'
           }}>
-            <div style={{
-              backgroundColor: 'white',
-              padding: '30px',
-              borderRadius: '10px',
-              width: '90%',
-              maxWidth: '800px',
-              maxHeight: '90vh',
-              overflow: 'auto'
+            <h2 style={{ 
+              marginTop: 0, 
+              color: '#2c3e50',
+              fontSize: '24px'
             }}>
-              <h2 style={{ marginTop: 0, color: '#2c3e50' }}>
-                {editingBlog ? '✏️ Edit Blog' : '📝 Create New Blog'}
-              </h2>
-              
-              <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
-                    Title:
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                    required
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '1px solid #ddd',
-                      borderRadius: '5px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
+              {editingBlog ? '✏️ Edit Blog' : '📝 Create New Blog'}
+            </h2>
+            
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontWeight: 'bold', 
+                  color: '#2c3e50' 
+                }}>
+                  Title:
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
-                    Description:
-                  </label>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontWeight: 'bold', 
+                  color: '#2c3e50' 
+                }}>
+                  Description:
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  required
+                  rows="3"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    fontSize: '16px',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontWeight: 'bold', 
+                  color: '#2c3e50' 
+                }}>
+                  Content:
+                </label>
+                <div style={{ position: 'relative' }}>
                   <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                    value={formData.content}
+                    onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
                     required
-                    rows="3"
+                    rows="10"
+                    placeholder={isGeneratingAI ? "🤖 AI is generating content..." : "Write your blog content here... (Supports Markdown formatting)"}
+                    disabled={isGeneratingAI}
                     style={{
                       width: '100%',
                       padding: '10px',
                       border: '1px solid #ddd',
                       borderRadius: '5px',
                       fontSize: '16px',
-                      resize: 'vertical'
+                      resize: 'vertical',
+                      fontFamily: 'monospace'
                     }}
                   />
+                  {isGeneratingAI && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      backgroundColor: 'rgba(255,255,255,0.9)',
+                      padding: '20px',
+                      borderRadius: '5px',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ marginBottom: '10px' }}>🤖</div>
+                      <div>Generating AI content...</div>
+                    </div>
+                  )}
                 </div>
+                <button 
+                  type="button" 
+                  onClick={handleGenerateAIContent}
+                  disabled={!formData.title.trim() || isGeneratingAI}
+                  style={{
+                    marginTop: '10px',
+                    backgroundColor: aiGenerateSuccess ? '#27ae60' : '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    padding: '10px 20px',
+                    borderRadius: '5px',
+                    cursor: formData.title.trim() && !isGeneratingAI ? 'pointer' : 'not-allowed',
+                    opacity: formData.title.trim() && !isGeneratingAI ? 1 : 0.6
+                  }}
+                >
+                  🤖 {aiGenerateSuccess ? 'Generated!' : 'Generate AI Content'}
+                </button>
+                <div style={{ 
+                  fontSize: '12px', 
+                  color: '#7f8c8d', 
+                  marginTop: '5px' 
+                }}>
+                  💡 AI will generate content with rich formatting (headings, **bold**, *italic*, links, lists, etc.)
+                </div>
+              </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
-                    Content:
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <textarea
-                      value={formData.content}
-                      onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                      required
-                      rows="10"
-                      placeholder={isGeneratingAI ? "🤖 AI is generating content..." : "Write your blog content here... (Supports Markdown formatting)"}
-                      disabled={isGeneratingAI}
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        border: '1px solid #ddd',
-                        borderRadius: '5px',
-                        fontSize: '16px',
-                        resize: 'vertical',
-                        fontFamily: 'monospace'
-                      }}
-                    />
-                    {isGeneratingAI && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        backgroundColor: 'rgba(255,255,255,0.9)',
-                        padding: '20px',
-                        borderRadius: '5px',
-                        textAlign: 'center'
-                      }}>
-                        <div style={{ marginBottom: '10px' }}>🤖</div>
-                        <div>Generating AI content...</div>
-                      </div>
-                    )}
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={handleGenerateAIContent}
-                    disabled={!formData.title.trim() || isGeneratingAI}
-                    style={{
-                      marginTop: '10px',
-                      backgroundColor: aiGenerateSuccess ? '#27ae60' : '#3498db',
-                      color: 'white',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: '5px',
-                      cursor: formData.title.trim() && !isGeneratingAI ? 'pointer' : 'not-allowed',
-                      opacity: formData.title.trim() && !isGeneratingAI ? 1 : 0.6
-                    }}
-                  >
-                    🤖 {aiGenerateSuccess ? 'Generated!' : 'Generate AI Content'}
-                  </button>
-                  <div style={{ fontSize: '12px', color: '#7f8c8d', marginTop: '5px' }}>
-                    💡 AI will generate content with rich formatting (headings, **bold**, *italic*, links, lists, etc.)
-                  </div>
-                </div>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ 
+                  display: 'block', 
+                  marginBottom: '5px', 
+                  fontWeight: 'bold', 
+                  color: '#2c3e50' 
+                }}>
+                  Author:
+                </label>
+                <input
+                  type="text"
+                  value={formData.author}
+                  onChange={(e) => setFormData(prev => ({ ...prev, author: e.target.value }))}
+                  placeholder="Anonymous"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
 
-                <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#2c3e50' }}>
-                    Author:
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.author}
-                    onChange={(e) => setFormData(prev => ({ ...prev, author: e.target.value }))}
-                    placeholder="Anonymous"
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '1px solid #ddd',
-                      borderRadius: '5px',
-                      fontSize: '16px'
-                    }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                  <button 
-                    type="submit"
-                    style={{
-                      backgroundColor: '#27ae60',
-                      color: 'white',
-                      border: 'none',
-                      padding: '12px 24px',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      fontSize: '16px'
-                    }}
-                  >
-                    {editingBlog ? '📝 Update Blog' : '📝 Create Blog'}
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setEditingBlog(null);
-                      resetForm();
-                    }}
-                    style={{
-                      backgroundColor: '#95a5a6',
-                      color: 'white',
-                      border: 'none',
-                      padding: '12px 24px',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      fontSize: '16px'
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div style={{ 
+                display: 'flex', 
+                gap: '10px', 
+                justifyContent: 'flex-end' 
+              }}>
+                <button 
+                  type="submit"
+                  style={{
+                    backgroundColor: '#27ae60',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 24px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '16px'
+                  }}
+                >
+                  {editingBlog ? '📝 Update Blog' : '📝 Create Blog'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setEditingBlog(null);
+                    resetForm();
+                  }}
+                  style={{
+                    backgroundColor: '#95a5a6',
+                    color: 'white',
+                    border: 'none',
+                    padding: '12px 24px',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    fontSize: '16px'
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
