@@ -462,7 +462,7 @@ const App = () => {
               >
                  Delete
               </button>
-                   // back to blogs button
+              {/*back to blogs button*/}
                    {showBlogDetail && (
               <button onClick={() => setShowBlogDetail(false)}
               style={{
