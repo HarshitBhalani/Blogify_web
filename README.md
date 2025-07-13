@@ -4,6 +4,7 @@ A modern, responsive blog web application built with React.js that allows users 
 
 ## 🌟 Features
 
+- **AI-Powered Content Generation**: Integrated Gemini AI for automated blog content creation
 - **Blog Management**: Create, edit, and delete blog posts
 - **Blog Listing**: View all blog posts in an organized list
 - **Blog Details**: Read individual blog posts with detailed view
@@ -20,6 +21,11 @@ A modern, responsive blog web application built with React.js that allows users 
 - JavaScript (ES6+)
 - CSS3
 - HTML5
+
+**AI Integration:**
+- Gemini AI API for content generation
+- Automated blog post creation
+- Smart content suggestions
 
 **Tools & Setup:**
 - Create React App
@@ -145,8 +151,10 @@ Make sure you have:
 
 ### 1. Blog Creation
 - Create new blog posts with title and content
+- AI-powered content generation using Gemini AI
 - Rich text editing capabilities
 - Form validation
+- Smart content suggestions and auto-completion
 
 ### 2. Blog Management
 - Edit existing blog posts
@@ -172,6 +180,7 @@ Make sure you have:
 
 ## 🔮 Future Enhancements
 
+- Enhanced AI content generation with more customization options
 - User authentication system
 - Backend API integration
 - Database connectivity
@@ -179,6 +188,7 @@ Make sure you have:
 - Categories and tags
 - Comments system
 - Like/favorite features
+- AI-powered content optimization and SEO suggestions
 
 ## 🤝 Contributing
 
@@ -197,7 +207,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Harshit Bhalani**
 - GitHub: [@HarshitBhalani](https://github.com/HarshitBhalani)
 - Project Link: [https://github.com/HarshitBhalani/Blogify_web](https://github.com/HarshitBhalani/Blogify_web)
-- live Project : Blogify(https://blogify-web-szk9.onrender.com/)
 
 ## 🙏 Acknowledgments
 
