@@ -197,6 +197,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Harshit Bhalani**
 - GitHub: [@HarshitBhalani](https://github.com/HarshitBhalani)
 - Project Link: [https://github.com/HarshitBhalani/Blogify_web](https://github.com/HarshitBhalani/Blogify_web)
+- live Project : Blogify(https://blogify-web-szk9.onrender.com/)
 
 ## 🙏 Acknowledgments
 
