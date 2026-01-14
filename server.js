@@ -14,7 +14,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // Middleware - FIXED ORDER
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-render-app.onrender.com'] // Replace with your actual Render URL
+    ? ['https://blogify-web-szk9.onrender.com/']
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
