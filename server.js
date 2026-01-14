@@ -1,14 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// OpenRouter API Key configuration
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 // Middleware
 app.use(cors());
@@ -21,11 +20,11 @@ mongoose.connect(process.env.MONGODB_URI, {
 });
 
 mongoose.connection.on('connected', () => {
-  console.log('✅ Connected to MongoDB');
+  console.log(' Connected to MongoDB');
 });
 
 mongoose.connection.on('error', (err) => {
-  console.log('❌ MongoDB connection error:', err);
+  console.log(' MongoDB connection error:', err);
 });
 
 // Blog Schema
@@ -64,20 +63,40 @@ const blogSchema = new mongoose.Schema({
 
 const Blog = mongoose.model('Blog', blogSchema);
 
-// AI Description Generation Function using Gemini
+// AI Description Generation Function using OpenRouter
 const generateDescription = async (title) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
     const prompt = `Write a short 2-3 sentence description about: ${title}`;
-    
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const description = response.text();
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 100,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    const description = result.choices?.[0]?.message?.content || '';
     
     return description.trim();
   } catch (error) {
-    console.error('Error generating description with Gemini:', error);
+    console.error('Error generating description with OpenRouter:', error);
     return `Learn about ${title} and discover key insights on this topic.`;
   }
 };
@@ -85,30 +104,43 @@ const generateDescription = async (title) => {
 // Enhanced AI Content Generation Function with Rich Formatting
 const generateAIContent = async (title) => {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
     // Enhanced prompt for rich content generation
-    const prompt = `Write a comprehensive and well-structured blog post about: "${title}"
+    const prompt = `Write a comprehensive blog post about: "${title}"
 
-Please format the content using markdown with the following guidelines:
-- Use # for the main title
-- Use ## for major section headings
-- Use ### for subsection headings
-- Use **bold text** for important terms and concepts
-- Use *italic text* for emphasis
-- Use numbered lists (1. 2. 3.) for step-by-step instructions
-- Use bullet points (- or *) for general lists
-- Use > for blockquotes when citing or highlighting important information
-- Use \`inline code\` for technical terms or code snippets
-- Use [link text](URL) format for any relevant links (you can use placeholder URLs like https://example.com)
-- Use --- for horizontal dividers between major sections
-- Keep paragraphs well-spaced with empty lines
+Use markdown format with:
+- # for main title
+- ## for section headings
+- **bold** for important terms
+- Bullet points for lists
+- 3-4 paragraphs of quality content`;
 
-The content should be informative, engaging, and well-structured with proper markdown formatting.`;
-    
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let content = response.text();
+    // Use OpenRouter API - completely free and reliable
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`OpenRouter API error: ${response.status} - ${errorData}`);
+    }
+
+    const result = await response.json();
+    let content = result.choices?.[0]?.message?.content || '';
     
     // Clean up the content
     content = content.trim();
@@ -119,13 +151,11 @@ The content should be informative, engaging, and well-structured with proper mar
     }
     
     // Fix common markdown issues
-    content = content.replace(/\n\n\n+/g, '\n\n'); // Fix excessive line breaks
-    content = content.replace(/\*\*\*([^*]+)\*\*\*/g, '**$1**'); // Fix triple asterisks
-    content = content.replace(/(?<!\n)\n(?![\n\-\*\d])/g, '\n\n'); // Ensure proper paragraph spacing
+    content = content.replace(/\n\n\n+/g, '\n\n');
     
     return content;
   } catch (error) {
-    console.error('Error generating content with Gemini:', error);
+    console.error('Error generating content with OpenRouter:', error);
     // Enhanced fallback content with markdown
     return `# ${title}
 
