@@ -2,14 +2,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path'); 
 const cors = require('cors');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize Groq AI
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY
+});
 
 // Middleware - FIXED ORDER
 app.use(cors({
@@ -71,37 +73,42 @@ const blogSchema = new mongoose.Schema({
 
 const Blog = mongoose.model('Blog', blogSchema);
 
-// AI Description Generation Function using Gemini
+// AI Description Generation Function using Groq
 const generateDescription = async (title) => {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('Gemini API key not configured');
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error('Groq API key not configured');
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
     const prompt = `Write a short 2-3 sentence description about: ${title}`;
     
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const description = response.text();
+    const message = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.7,
+      max_tokens: 300
+    });
     
+    const description = message.choices[0]?.message?.content || '';
     return description.trim();
   } catch (error) {
-    console.error('Error generating description with Gemini:', error);
+    console.error('Error generating description with Groq:', error);
     return `Learn about ${title} and discover key insights on this topic.`;
   }
 };
 
-// Enhanced AI Content Generation Function with Rich Formatting
+// Enhanced AI Content Generation Function with Rich Formatting using Groq
 const generateAIContent = async (title) => {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('Gemini API key not configured');
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error('Groq API key not configured');
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
     // Enhanced prompt for rich content generation
     const prompt = `Write a comprehensive and well-structured blog post about: "${title}"
 
@@ -121,9 +128,19 @@ Please format the content using markdown with the following guidelines:
 
 The content should be informative, engaging, and well-structured with proper markdown formatting.`;
     
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    let content = response.text();
+    const message = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+    
+    let content = message.choices[0]?.message?.content || '';
     
     // Clean up the content
     content = content.trim();
@@ -140,7 +157,7 @@ The content should be informative, engaging, and well-structured with proper mar
     
     return content;
   } catch (error) {
-    console.error('Error generating content with Gemini:', error);
+    console.error('Error generating content with Groq:', error);
     // Enhanced fallback content with markdown
     return `# ${title}
 
@@ -150,7 +167,7 @@ The content should be informative, engaging, and well-structured with proper mar
 We encountered a technical issue while generating AI content for **"${title}"**.
 
 ## Next steps:
-1. **Check your API configuration** - Ensure your Gemini API key is valid
+1. **Check your API configuration** - Ensure your Groq API key is valid
 2. **Try again** - The issue might be temporary
 3. **Manual creation** - You can write the content manually
 
@@ -303,8 +320,10 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    geminiConfigured: !!process.env.GEMINI_API_KEY,
+    groqConfigured: !!process.env.GROQ_API_KEY,
     mongoConnected: mongoose.connection.readyState === 1,
+    aiProvider: 'Groq',
+    model: 'llama-3.3-70b-versatile',
     features: ['markdown-support', 'rich-content-generation']
   });
 });
@@ -336,8 +355,9 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  console.log(`Gemini API configured: ${!!process.env.GEMINI_API_KEY}`);
-  console.log(`MongoDB connected: ${mongoose.connection.readyState === 1}`);
-  console.log(`Enhanced features: Markdown support, Rich content generation`);
+  console.log(`🚀 Groq API configured: ${!!process.env.GROQ_API_KEY}`);
+  console.log(`📝 MongoDB connected: ${mongoose.connection.readyState === 1}`);
+  console.log(`✨ Enhanced features: Markdown support, Rich content generation`);
+  console.log(`📋 AI Provider: Groq (llama-3.3-70b-versatile)`);
   // keepAlive();
 });
