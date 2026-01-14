@@ -1,17 +1,25 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const path = require('path'); 
 const cors = require('cors');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// OpenRouter API Key configuration
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+// Initialize Gemini AI
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Middleware
-app.use(cors());
+// Middleware - FIXED ORDER
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-render-app.onrender.com'] // Replace with your actual Render URL
+    : ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true
+}));
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'client/build')));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, {
@@ -20,11 +28,11 @@ mongoose.connect(process.env.MONGODB_URI, {
 });
 
 mongoose.connection.on('connected', () => {
-  console.log(' Connected to MongoDB');
+  console.log('✅ Connected to MongoDB');
 });
 
 mongoose.connection.on('error', (err) => {
-  console.log(' MongoDB connection error:', err);
+  console.log('❌ MongoDB connection error:', err);
 });
 
 // Blog Schema
@@ -63,40 +71,24 @@ const blogSchema = new mongoose.Schema({
 
 const Blog = mongoose.model('Blog', blogSchema);
 
-// AI Description Generation Function using OpenRouter
+// AI Description Generation Function using Gemini
 const generateDescription = async (title) => {
   try {
-    const prompt = `Write a short 2-3 sentence description about: ${title}`;
-
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.5,
-        max_tokens: 100,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status}`);
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('Gemini API key not configured');
     }
 
-    const result = await response.json();
-    const description = result.choices?.[0]?.message?.content || '';
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    const prompt = `Write a short 2-3 sentence description about: ${title}`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const description = response.text();
     
     return description.trim();
   } catch (error) {
-    console.error('Error generating description with OpenRouter:', error);
+    console.error('Error generating description with Gemini:', error);
     return `Learn about ${title} and discover key insights on this topic.`;
   }
 };
@@ -104,43 +96,34 @@ const generateDescription = async (title) => {
 // Enhanced AI Content Generation Function with Rich Formatting
 const generateAIContent = async (title) => {
   try {
-    // Enhanced prompt for rich content generation
-    const prompt = `Write a comprehensive blog post about: "${title}"
-
-Use markdown format with:
-- # for main title
-- ## for section headings
-- **bold** for important terms
-- Bullet points for lists
-- 3-4 paragraphs of quality content`;
-
-    // Use OpenRouter API - completely free and reliable
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 1024,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`OpenRouter API error: ${response.status} - ${errorData}`);
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('Gemini API key not configured');
     }
 
-    const result = await response.json();
-    let content = result.choices?.[0]?.message?.content || '';
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    // Enhanced prompt for rich content generation
+    const prompt = `Write a comprehensive and well-structured blog post about: "${title}"
+
+Please format the content using markdown with the following guidelines:
+- Use # for the main title
+- Use ## for major section headings
+- Use ### for subsection headings
+- Use **bold text** for important terms and concepts
+- Use *italic text* for emphasis
+- Use numbered lists (1. 2. 3.) for step-by-step instructions
+- Use bullet points (- or *) for general lists
+- Use > for blockquotes when citing or highlighting important information
+- Use \`inline code\` for technical terms or code snippets
+- Use [link text](URL) format for any relevant links (you can use placeholder URLs like https://example.com)
+- Use --- for horizontal dividers between major sections
+- Keep paragraphs well-spaced with empty lines
+
+The content should be informative, engaging, and well-structured with proper markdown formatting.`;
+    
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let content = response.text();
     
     // Clean up the content
     content = content.trim();
@@ -151,11 +134,13 @@ Use markdown format with:
     }
     
     // Fix common markdown issues
-    content = content.replace(/\n\n\n+/g, '\n\n');
+    content = content.replace(/\n\n\n+/g, '\n\n'); // Fix excessive line breaks
+    content = content.replace(/\*\*\*([^*]+)\*\*\*/g, '**$1**'); // Fix triple asterisks
+    content = content.replace(/(?<!\n)\n(?![\n\-\*\d])/g, '\n\n'); // Ensure proper paragraph spacing
     
     return content;
   } catch (error) {
-    console.error('Error generating content with OpenRouter:', error);
+    console.error('Error generating content with Gemini:', error);
     // Enhanced fallback content with markdown
     return `# ${title}
 
@@ -180,6 +165,8 @@ ${error.message}
   }
 };
 
+// API Routes
+
 // Generate description for title
 app.post('/api/generate-description', async (req, res) => {
   try {
@@ -192,7 +179,7 @@ app.post('/api/generate-description', async (req, res) => {
     res.json({ description });
   } catch (error) {
     console.error('Error in generate-description:', error);
-    res.status(500).json({ message: 'Failed to generate description' });
+    res.status(500).json({ message: 'Failed to generate description', error: error.message });
   }
 });
 
@@ -212,11 +199,9 @@ app.post('/api/generate-content', async (req, res) => {
     });
   } catch (error) {
     console.error('Error in generate-content:', error);
-    res.status(500).json({ message: 'Failed to generate content' });
+    res.status(500).json({ message: 'Failed to generate content', error: error.message });
   }
 });
-
-// Routes
 
 // Get all blogs
 app.get('/api/blogs', async (req, res) => {
@@ -224,6 +209,7 @@ app.get('/api/blogs', async (req, res) => {
     const blogs = await Blog.find().sort({ createdAt: -1 });
     res.json(blogs);
   } catch (error) {
+    console.error('Error fetching blogs:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -237,6 +223,7 @@ app.get('/api/blogs/:id', async (req, res) => {
     }
     res.json(blog);
   } catch (error) {
+    console.error('Error fetching blog:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -245,6 +232,11 @@ app.get('/api/blogs/:id', async (req, res) => {
 app.post('/api/blogs', async (req, res) => {
   try {
     const { title, description, content, author, contentType } = req.body;
+    
+    // Validation
+    if (!title || !description || !content) {
+      return res.status(400).json({ message: 'Title, description, and content are required' });
+    }
     
     const blog = new Blog({
       title,
@@ -255,8 +247,10 @@ app.post('/api/blogs', async (req, res) => {
     });
 
     const savedBlog = await blog.save();
+    console.log('Blog created successfully:', savedBlog._id);
     res.status(201).json(savedBlog);
   } catch (error) {
+    console.error('Error creating blog:', error);
     res.status(400).json({ message: error.message });
   }
 });
@@ -285,6 +279,7 @@ app.put('/api/blogs/:id', async (req, res) => {
 
     res.json(blog);
   } catch (error) {
+    console.error('Error updating blog:', error);
     res.status(400).json({ message: error.message });
   }
 });
@@ -298,6 +293,7 @@ app.delete('/api/blogs/:id', async (req, res) => {
     }
     res.json({ message: 'Blog deleted successfully' });
   } catch (error) {
+    console.error('Error deleting blog:', error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -308,12 +304,40 @@ app.get('/api/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     geminiConfigured: !!process.env.GEMINI_API_KEY,
+    mongoConnected: mongoose.connection.readyState === 1,
     features: ['markdown-support', 'rich-content-generation']
   });
 });
 
+// Serve React app for any other routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+});
+
+// for render server alive
+// const RENDER_URL = 'https://blogify-web-szk9.onrender.com';
+
+// Keep-alive function
+// const keepAlive = () => {
+//   setInterval(async () => {
+//     try {
+//       const response = await fetch(`${RENDER_URL}/api/health`);
+//       console.log(`Keep-alive ping: ${response.status}`);
+//     } catch (error) {
+//       console.error('Keep-alive failed:', error.message);
+//     }
+//   }, 14 * 60 * 1000); // Ping every 14 minutes
+// };
+
+// Health check endpoint
+// app.get('/api/health', (req, res) => {
+//   res.json({ status: 'Server is alive', timestamp: new Date().toISOString() });
+// });
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Gemini API configured: ${!!process.env.GEMINI_API_KEY}`);
+  console.log(`MongoDB connected: ${mongoose.connection.readyState === 1}`);
   console.log(`Enhanced features: Markdown support, Rich content generation`);
+  // keepAlive();
 });

@@ -286,7 +286,7 @@ const App = () => {
                 fontSize: '14px'
               }}
             >
-              ← Back to Grid
+              ← Blogs
             </button>
           )} */}
         </div>
@@ -307,7 +307,7 @@ const App = () => {
             transition: 'background-color 0.3s'
           }}
         >
-          ✏️ Create New Blog
+           Create New Blog
         </button>
       </header>
 
@@ -445,9 +445,8 @@ const App = () => {
                   transition: 'background-color 0.3s'
                 }}
               >
-                ✏️ Edit
+                 Edit
               </button>
-              
               <button 
                 onClick={() => handleDelete(selectedBlog._id)}
                 style={{
@@ -461,27 +460,24 @@ const App = () => {
                   transition: 'background-color 0.3s'
                 }}
               >
-                🗑️ Delete
+                 Delete
               </button>
-               {showBlogDetail && (
-            <button 
-              onClick={() => setShowBlogDetail(false)}
+              {/*back to blogs button*/}
+                   {showBlogDetail && (
+              <button onClick={() => setShowBlogDetail(false)}
               style={{
                 backgroundColor: '#34495e',
                 color: 'white',
-                border: 'none', 
+                border: 'none',
                 padding: '8px 15px',
                 borderRadius: '5px',
                 cursor: 'pointer',
-                fontSize: '14px',
-                alignItems:"right",
-              }}
-            >
+                fontSize: '14px'
+              }}>
               ← Blogs
             </button>
-          )}
+              )}
             </div>
-            
             
             {/* Blog Title */}
             <h1 style={{ 
@@ -671,7 +667,7 @@ const App = () => {
               color: '#2c3e50',
               fontSize: '24px'
             }}>
-              {editingBlog ? '✏️ Edit Blog' : '📝 Create New Blog'}
+              {editingBlog ? ' Edit Blog' : ' Create New Blog'}
             </h2>
             
             <form onSubmit={handleSubmit}>
@@ -834,7 +830,7 @@ const App = () => {
                     fontSize: '16px'
                   }}
                 >
-                  {editingBlog ? '📝 Update Blog' : '📝 Create Blog'}
+                  {editingBlog ? ' Update Blog' : ' Create Blog'}
                 </button>
                 <button 
                   type="button" 

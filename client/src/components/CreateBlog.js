@@ -12,6 +12,12 @@ const CreateBlog = () => {
     });
     const [loading, setLoading] = useState(false);
     const [generatingDescription, setGeneratingDescription] = useState(false);
+    const [generatingContent, setGeneratingContent] = useState(false);
+
+    // Dynamic API URL based on environment
+    const API_URL = process.env.NODE_ENV === 'production' 
+        ? '' // In production, use relative URLs
+        : 'http://localhost:5000';
 
     const handleChange = (e) => {
         setFormData({
@@ -28,7 +34,7 @@ const CreateBlog = () => {
 
         setGeneratingDescription(true);
         try {
-            const response = await axios.post('http://localhost:5000/api/generate-description', {
+            const response = await axios.post(`${API_URL}/api/generate-description`, {
                 title: formData.title
             });
             setFormData({
@@ -43,6 +49,29 @@ const CreateBlog = () => {
         }
     };
 
+    const generateContent = async () => {
+        if (!formData.title.trim()) {
+            alert('Please enter a title first');
+            return;
+        }
+
+        setGeneratingContent(true);
+        try {
+            const response = await axios.post(`${API_URL}/api/generate-content`, {
+                title: formData.title
+            });
+            setFormData({
+                ...formData,
+                content: response.data.content
+            });
+        } catch (error) {
+            console.error('Error generating content:', error);
+            alert('Error generating content. Please try again.');
+        } finally {
+            setGeneratingContent(false);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -53,11 +82,15 @@ const CreateBlog = () => {
 
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/api/blogs', formData);
+            const response = await axios.post(`${API_URL}/api/blogs`, {
+                ...formData,
+                contentType: 'markdown'
+            });
+            console.log('Blog created successfully:', response.data);
             navigate('/');
         } catch (error) {
             console.error('Error creating blog:', error);
-            alert('Error creating blog. Please try again.');
+            alert(`Error creating blog: ${error.response?.data?.message || error.message}`);
         } finally {
             setLoading(false);
         }
@@ -116,15 +149,42 @@ const CreateBlog = () => {
 
                 <div className="mb-3">
                     <label className="form-label">Content *</label>
+                    <div className="mb-2">
+                        <button
+                            type="button"
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={generateContent}
+                            disabled={generatingContent || !formData.title.trim()}
+                        >
+                            {generatingContent ? (
+                                <>
+                                    <span className="spinner-border spinner-border-sm me-2"></span>
+                                    Generating AI Content...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fas fa-robot me-2"></i>
+                                    Generate AI Content
+                                </>
+                            )}
+                        </button>
+                        <small className="text-muted ms-2">
+                            Generate complete blog content using AI
+                        </small>
+                    </div>
                     <textarea
                         className="form-control"
                         name="content"
                         value={formData.content}
                         onChange={handleChange}
-                        rows="10"
-                        placeholder="Write your blog content here..."
+                        rows="15"
+                        placeholder="Write your blog content here... or use AI to generate it!"
                         required
+                        style={{ fontFamily: 'monospace' }}
                     />
+                    <small className="text-muted">
+                        Supports Markdown formatting (# for headings, **bold**, *italic*, etc.)
+                    </small>
                 </div>
 
                 <div className="mb-3">
@@ -140,7 +200,11 @@ const CreateBlog = () => {
                 </div>
 
                 <div className="d-flex gap-2">
-                    <button type="submit" className="btn btn-primary" disabled={loading}>
+                    <button 
+                        type="submit" 
+                        className="btn btn-primary" 
+                        disabled={loading || generatingDescription || generatingContent}
+                    >
                         {loading ? (
                             <>
                                 <span className="spinner-border spinner-border-sm me-2"></span>
@@ -157,6 +221,7 @@ const CreateBlog = () => {
                         type="button"
                         className="btn btn-secondary"
                         onClick={() => navigate('/')}
+                        disabled={loading || generatingDescription || generatingContent}
                     >
                         Cancel
                     </button>
