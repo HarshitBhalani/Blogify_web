@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const path = require('path'); 
+const path = require('path');
 const cors = require('cors');
 const Groq = require('groq-sdk');
 require('dotenv').config();
@@ -8,22 +8,23 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize Groq AI
+// ================= GROQ INITIALIZATION =================
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
-// Middleware - FIXED ORDER
+// ================= MIDDLEWARE =================
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://blogify-web-szk9.onrender.com/']
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://blogify-web-szk9.onrender.com']
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/build')));
 
-// MongoDB Connection
+// ================= MONGODB CONNECTION =================
 mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -37,327 +38,199 @@ mongoose.connection.on('error', (err) => {
   console.log('❌ MongoDB connection error:', err);
 });
 
-// Blog Schema
+// ================= BLOG SCHEMA =================
 const blogSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
+  title: { type: String, required: true, trim: true },
+  description: { type: String, required: true },
+  content: { type: String, required: true },
   contentType: {
     type: String,
     enum: ['markdown', 'html', 'plain'],
     default: 'markdown'
   },
-  author: {
-    type: String,
-    default: 'Anonymous'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
+  author: { type: String, default: 'Anonymous' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 const Blog = mongoose.model('Blog', blogSchema);
 
-// AI Description Generation Function using Groq
+// ================= AI DESCRIPTION =================
 const generateDescription = async (title) => {
   try {
-    if (!process.env.GROQ_API_KEY) {
-      throw new Error('Groq API key not configured');
-    }
-
     const prompt = `Write a short 2-3 sentence description about: ${title}`;
-    
+
     const message = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+      messages: [{ role: 'user', content: prompt }],
       model: 'llama-3.3-70b-versatile',
       temperature: 0.7,
       max_tokens: 300
     });
-    
-    const description = message.choices[0]?.message?.content || '';
-    return description.trim();
+
+    return message.choices[0]?.message?.content?.trim() || '';
   } catch (error) {
-    console.error('Error generating description with Groq:', error);
+    console.error('Groq description error:', error);
     return `Learn about ${title} and discover key insights on this topic.`;
   }
 };
 
-// Enhanced AI Content Generation Function with Rich Formatting using Groq
+// ================= AI CONTENT =================
 const generateAIContent = async (title) => {
   try {
-    if (!process.env.GROQ_API_KEY) {
-      throw new Error('Groq API key not configured');
-    }
+    const prompt = `Write a comprehensive markdown blog about "${title}" with headings, lists, formatting and structured content.`;
 
-    // Enhanced prompt for rich content generation
-    const prompt = `Write a comprehensive and well-structured blog post about: "${title}"
-
-Please format the content using markdown with the following guidelines:
-- Use # for the main title
-- Use ## for major section headings
-- Use ### for subsection headings
-- Use **bold text** for important terms and concepts
-- Use *italic text* for emphasis
-- Use numbered lists (1. 2. 3.) for step-by-step instructions
-- Use bullet points (- or *) for general lists
-- Use > for blockquotes when citing or highlighting important information
-- Use \`inline code\` for technical terms or code snippets
-- Use [link text](URL) format for any relevant links (you can use placeholder URLs like https://example.com)
-- Use --- for horizontal dividers between major sections
-- Keep paragraphs well-spaced with empty lines
-
-The content should be informative, engaging, and well-structured with proper markdown formatting.`;
-    
     const message = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+      messages: [{ role: 'user', content: prompt }],
       model: 'llama-3.3-70b-versatile',
       temperature: 0.7,
       max_tokens: 2000
     });
-    
+
     let content = message.choices[0]?.message?.content || '';
-    
-    // Clean up the content
+
     content = content.trim();
-    
-    // Ensure proper markdown formatting
+
     if (!content.startsWith('#')) {
       content = `# ${title}\n\n${content}`;
     }
-    
-    // Fix common markdown issues
-    content = content.replace(/\n\n\n+/g, '\n\n'); // Fix excessive line breaks
-    content = content.replace(/\*\*\*([^*]+)\*\*\*/g, '**$1**'); // Fix triple asterisks
-    content = content.replace(/(?<!\n)\n(?![\n\-\*\d])/g, '\n\n'); // Ensure proper paragraph spacing
-    
+
     return content;
   } catch (error) {
-    console.error('Error generating content with Groq:', error);
-    // Enhanced fallback content with markdown
+    console.error('Groq content error:', error);
+
     return `# ${title}
 
-> **Error Notice**: Content generation is temporarily unavailable.
+> Content generation temporarily unavailable.
 
-## What happened?
-We encountered a technical issue while generating AI content for **"${title}"**.
-
-## Next steps:
-1. **Check your API configuration** - Ensure your Groq API key is valid
-2. **Try again** - The issue might be temporary
-3. **Manual creation** - You can write the content manually
-
-### Error Details:
-\`\`\`
-${error.message}
-\`\`\`
-
----
-
-*Please try again or contact support if the issue persists.*`;
+Please try again later.`;
   }
 };
 
-// API Routes
+// ================= API ROUTES =================
 
-// Generate description for title
+// Generate Description
 app.post('/api/generate-description', async (req, res) => {
   try {
     const { title } = req.body;
-    if (!title) {
-      return res.status(400).json({ message: 'Title is required' });
-    }
-    
+    if (!title) return res.status(400).json({ message: 'Title required' });
+
     const description = await generateDescription(title);
     res.json({ description });
   } catch (error) {
-    console.error('Error in generate-description:', error);
-    res.status(500).json({ message: 'Failed to generate description', error: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
-// Generate AI content for title
+// Generate Content
 app.post('/api/generate-content', async (req, res) => {
   try {
     const { title } = req.body;
-    if (!title) {
-      return res.status(400).json({ message: 'Title is required' });
-    }
-    
-    console.log(`Generating enhanced content for: ${title}`);
+    if (!title) return res.status(400).json({ message: 'Title required' });
+
     const content = await generateAIContent(title);
-    res.json({ 
+
+    res.json({
       content,
       contentType: 'markdown'
     });
   } catch (error) {
-    console.error('Error in generate-content:', error);
-    res.status(500).json({ message: 'Failed to generate content', error: error.message });
+    res.status(500).json({ message: error.message });
   }
 });
 
-// Get all blogs
+// Get Blogs
 app.get('/api/blogs', async (req, res) => {
-  try {
-    const blogs = await Blog.find().sort({ createdAt: -1 });
-    res.json(blogs);
-  } catch (error) {
-    console.error('Error fetching blogs:', error);
-    res.status(500).json({ message: error.message });
-  }
+  const blogs = await Blog.find().sort({ createdAt: -1 });
+  res.json(blogs);
 });
 
-// Get single blog
+// Get Single Blog
 app.get('/api/blogs/:id', async (req, res) => {
-  try {
-    const blog = await Blog.findById(req.params.id);
-    if (!blog) {
-      return res.status(404).json({ message: 'Blog not found' });
-    }
-    res.json(blog);
-  } catch (error) {
-    console.error('Error fetching blog:', error);
-    res.status(500).json({ message: error.message });
-  }
+  const blog = await Blog.findById(req.params.id);
+  if (!blog) return res.status(404).json({ message: 'Blog not found' });
+  res.json(blog);
 });
 
-// Create blog
+// Create Blog
 app.post('/api/blogs', async (req, res) => {
-  try {
-    const { title, description, content, author, contentType } = req.body;
-    
-    // Validation
-    if (!title || !description || !content) {
-      return res.status(400).json({ message: 'Title, description, and content are required' });
-    }
-    
-    const blog = new Blog({
-      title,
-      description,
-      content,
-      contentType: contentType || 'markdown',
-      author: author || 'Anonymous'
-    });
+  const { title, description, content, author, contentType } = req.body;
 
-    const savedBlog = await blog.save();
-    console.log('Blog created successfully:', savedBlog._id);
-    res.status(201).json(savedBlog);
-  } catch (error) {
-    console.error('Error creating blog:', error);
-    res.status(400).json({ message: error.message });
+  if (!title || !description || !content) {
+    return res.status(400).json({ message: 'Missing fields' });
   }
+
+  const blog = new Blog({
+    title,
+    description,
+    content,
+    contentType: contentType || 'markdown',
+    author: author || 'Anonymous'
+  });
+
+  const savedBlog = await blog.save();
+  res.status(201).json(savedBlog);
 });
 
-// Update blog
+// Update Blog
 app.put('/api/blogs/:id', async (req, res) => {
-  try {
-    const { title, description, content, author, contentType } = req.body;
-    
-    const blog = await Blog.findByIdAndUpdate(
-      req.params.id,
-      {
-        title,
-        description,
-        content,
-        contentType: contentType || 'markdown',
-        author,
-        updatedAt: Date.now()
-      },
-      { new: true }
-    );
+  const blog = await Blog.findByIdAndUpdate(
+    req.params.id,
+    { ...req.body, updatedAt: Date.now() },
+    { new: true }
+  );
 
-    if (!blog) {
-      return res.status(404).json({ message: 'Blog not found' });
-    }
+  if (!blog) return res.status(404).json({ message: 'Blog not found' });
 
-    res.json(blog);
-  } catch (error) {
-    console.error('Error updating blog:', error);
-    res.status(400).json({ message: error.message });
-  }
+  res.json(blog);
 });
 
-// Delete blog
+// Delete Blog
 app.delete('/api/blogs/:id', async (req, res) => {
-  try {
-    const blog = await Blog.findByIdAndDelete(req.params.id);
-    if (!blog) {
-      return res.status(404).json({ message: 'Blog not found' });
-    }
-    res.json({ message: 'Blog deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting blog:', error);
-    res.status(500).json({ message: error.message });
-  }
+  const blog = await Blog.findByIdAndDelete(req.params.id);
+  if (!blog) return res.status(404).json({ message: 'Blog not found' });
+
+  res.json({ message: 'Blog deleted successfully' });
 });
 
-// Health check endpoint
+// ================= HEALTH CHECK =================
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    groqConfigured: !!process.env.GROQ_API_KEY,
     mongoConnected: mongoose.connection.readyState === 1,
-    aiProvider: 'Groq',
-    model: 'llama-3.3-70b-versatile',
-    features: ['markdown-support', 'rich-content-generation']
+    groqConfigured: !!process.env.GROQ_API_KEY
   });
 });
 
-// Serve React app for any other routes
+// ================= SERVE REACT =================
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
-// for render server alive
-// const RENDER_URL = 'https://blogify-web-szk9.onrender.com';
+// ================= KEEP ALIVE (RENDER FREE FIX) =================
+const RENDER_URL = "https://blogify-web-szk9.onrender.com";
 
-// Keep-alive function
-// const keepAlive = () => {
-//   setInterval(async () => {
-//     try {
-//       const response = await fetch(`${RENDER_URL}/api/health`);
-//       console.log(`Keep-alive ping: ${response.status}`);
-//     } catch (error) {
-//       console.error('Keep-alive failed:', error.message);
-//     }
-//   }, 14 * 60 * 1000); // Ping every 14 minutes
-// };
+const keepAlive = () => {
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Keep-alive disabled (development mode)");
+    return;
+  }
 
-// Health check endpoint
-// app.get('/api/health', (req, res) => {
-//   res.json({ status: 'Server is alive', timestamp: new Date().toISOString() });
-// });
+  setInterval(async () => {
+    try {
+      const response = await fetch(`${RENDER_URL}/api/health`);
+      console.log(`✅ Keep-alive ping: ${response.status}`);
+    } catch (error) {
+      console.error("❌ Keep-alive failed:", error.message);
+    }
+  }, 14 * 60 * 1000); // every 14 minutes
+};
 
+// ================= SERVER START =================
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`🚀 Groq API configured: ${!!process.env.GROQ_API_KEY}`);
-  console.log(`📝 MongoDB connected: ${mongoose.connection.readyState === 1}`);
-  console.log(`✨ Enhanced features: Markdown support, Rich content generation`);
-  console.log(`📋 AI Provider: Groq (llama-3.3-70b-versatile)`);
-  // keepAlive();
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🧠 Groq configured: ${!!process.env.GROQ_API_KEY}`);
+  console.log(`🗄 MongoDB connected: ${mongoose.connection.readyState === 1}`);
+
+  keepAlive();
 });
