@@ -453,47 +453,67 @@ h4 {
 }
 
 .blog-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+  border: 1px solid #d8e3f0;
+  border-radius: 18px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.blog-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, #60a5fa, #22d3ee);
+  opacity: 0.85;
 }
 
 .blog-card .ui-card-content {
-  padding: 0.95rem;
+  padding: 1rem 1rem 0.95rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 230px;
 }
 
 .blog-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 24px rgba(18, 32, 51, 0.13);
+  transform: translateY(-4px);
+  border-color: #b9d4f4;
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.16);
 }
 
 .blog-card h4 {
   margin: 0;
-  font-size: 1.05rem;
-  line-height: 1.35;
+  font-size: 1.1rem;
+  line-height: 1.32;
+  color: #0f172a;
 }
 
 .blog-card p {
-  margin: 0.62rem 0 0.85rem;
-  color: var(--muted);
-  font-size: 0.93rem;
+  margin: 0.65rem 0 0;
+  color: #475569;
+  font-size: 0.94rem;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1;
 }
 
 .blog-card-footer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 0.55rem;
   color: #4f647e;
   font-size: 0.78rem;
-  margin-bottom: 0;
+  margin-top: 0.9rem;
 }
 
 .blog-card-footer span {
@@ -628,7 +648,7 @@ h4 {
   border-radius: 8px;
 }
 
-.blog-content-rendered code {
+.blog-content-rendered :not(pre) > code {
   background: #eef3fa;
   border: 1px solid #dce7f5;
   border-radius: 6px;
@@ -641,6 +661,19 @@ h4 {
   border-radius: 12px;
   padding: 0.95rem;
   overflow-x: auto;
+  margin: 0.9rem 0 1.1rem;
+}
+
+.blog-content-rendered pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  display: block;
+  white-space: pre;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .blog-content-rendered a {
