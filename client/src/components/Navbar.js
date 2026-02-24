@@ -5,9 +5,13 @@ const Navbar = () => {
   return (
     <nav className='app-header'>
       <div className='app-brand'>
-        <i className='fas fa-blog'></i>
+        <img
+          src='/blogify_favicon_transparent.png'
+          alt='Blogify logo'
+          className='app-brand-logo'
+        />
         <Link className='navbar-brand-link' to='/' style={{ textDecoration: 'none', color: 'inherit' }}>
-          My Blog App
+          Blogify
         </Link>
       </div>
       <div className='header-actions'>

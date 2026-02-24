@@ -255,7 +255,11 @@ const App = () => {
     <div className="app-shell">
       <header className="app-header">
         <div className="app-brand">
-          <i className="fas fa-file-alt" aria-hidden="true"></i>
+          <img
+            src="/blogify_favicon_transparent.png"
+            alt="Blogify logo"
+            className="app-brand-logo"
+          />
           <h1>{APP_NAME}</h1>
         </div>
         <div className="header-actions">
