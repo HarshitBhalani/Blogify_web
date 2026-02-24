@@ -3,17 +3,23 @@ import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
-      <div className="container">
-        <Link className="navbar-brand" to="/">
-          <i className="fas fa-blog me-2"></i>
+    <nav className='app-header'>
+      <div className='app-brand'>
+        <i className='fas fa-blog'></i>
+        <Link className='navbar-brand-link' to='/' style={{ textDecoration: 'none', color: 'inherit' }}>
           My Blog App
         </Link>
-        <div className="navbar-nav ms-auto">
-          <Link className="nav-link" to="/">All Blogs</Link>
-          <Link className="nav-link" to="/create">Create Blog</Link>
-        </div>
+      </div>
+      <div className='header-actions'>
+        <Link className='ui-button ui-button-outline ui-button-md' to='/'>
+          All Blogs
+        </Link>
+        <Link className='ui-button ui-button-default ui-button-md' to='/create'>
+          Create Blog
+        </Link>
       </div>
     </nav>
   );
 };
+
+export default Navbar;

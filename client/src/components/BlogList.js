@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { Card, CardContent } from './ui/card';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 
 const BlogList = () => {
   const [blogs, setBlogs] = useState([]);
@@ -25,7 +28,7 @@ const BlogList = () => {
     if (window.confirm('Are you sure you want to delete this blog?')) {
       try {
         await axios.delete(`http://localhost:5000/api/blogs/${id}`);
-        setBlogs(blogs.filter(blog => blog._id !== id));
+        setBlogs(blogs.filter((blog) => blog._id !== id));
       } catch (error) {
         console.error('Error deleting blog:', error);
       }
@@ -34,59 +37,59 @@ const BlogList = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className='app-loading'>
+        <Card className='app-loading-card'>
+          <i className='fas fa-file-alt' aria-hidden='true'></i>
+          <p>Loading blogs...</p>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className='home-page'>
+      <div className='section-header'>
         <h1>All Blogs</h1>
-        <Link to="/create" className="btn btn-primary">
-          <i className="fas fa-plus me-2"></i>
+        <Link to='/create' className='ui-button ui-button-default ui-button-md'>
+          <i className='fas fa-plus me-2'></i>
           Create New Blog
         </Link>
       </div>
 
       {blogs.length === 0 ? (
-        <div className="text-center">
-          <p className="lead">No blogs found. Create your first blog!</p>
-          <Link to="/create" className="btn btn-primary">Create Blog</Link>
-        </div>
+        <Card className='empty-state'>
+          <i className='fas fa-folder-open' aria-hidden='true'></i>
+          <p className='lead'>No blogs found. Create your first blog!</p>
+          <Link to='/create' className='ui-button ui-button-default ui-button-md'>
+            Create Blog
+          </Link>
+        </Card>
       ) : (
-        <div className="row">
-          {blogs.map(blog => (
-            <div key={blog._id} className="col-md-6 col-lg-4 mb-4">
-              <div className="card h-100">
-                <div className="card-body">
-                  <h5 className="card-title">{blog.title}</h5>
-                  <p className="card-text">{blog.description}</p>
-                  <p className="card-text">
-                    <small className="text-muted">
-                      By {blog.author} • {new Date(blog.createdAt).toLocaleDateString()}
-                    </small>
-                  </p>
+        <div className='blog-grid'>
+          {blogs.map((blog) => (
+            <Card key={blog._id} className='blog-card'>
+              <CardContent>
+                <Link to={`/blog/${blog._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <h5>{blog.title}</h5>
+                  <p>{blog.description}</p>
+                </Link>
+                <div className='blog-card-footer'>
+                  <Badge variant='secondary'>By {blog.author}</Badge>
+                  <Badge variant='outline'>{new Date(blog.createdAt).toLocaleDateString()}</Badge>
                 </div>
-                <div className="card-footer">
-                  <Link to={`/blog/${blog._id}`} className="btn btn-outline-primary btn-sm me-2">
+                <div className='form-actions' style={{ marginTop: '0.75rem' }}>
+                  <Link to={`/blog/${blog._id}`} className='ui-button ui-button-outline ui-button-sm'>
                     Read More
                   </Link>
-                  <Link to={`/edit/${blog._id}`} className="btn btn-outline-warning btn-sm me-2">
+                  <Link to={`/edit/${blog._id}`} className='ui-button ui-button-secondary ui-button-sm'>
                     Edit
                   </Link>
-                  <button 
-                    onClick={() => deleteBlog(blog._id)}
-                    className="btn btn-outline-danger btn-sm"
-                  >
+                  <Button size='sm' variant='destructive' onClick={() => deleteBlog(blog._id)}>
                     Delete
-                  </button>
+                  </Button>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

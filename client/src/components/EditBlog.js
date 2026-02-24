@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 
 const EditBlog = () => {
   const { id } = useParams();
@@ -9,16 +13,13 @@ const EditBlog = () => {
     title: '',
     description: '',
     content: '',
-    author: ''
+    author: '',
   });
   const [loading, setLoading] = useState(false);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [fetchingBlog, setFetchingBlog] = useState(true);
 
-  // Dynamic API URL based on environment
-  const API_URL = process.env.NODE_ENV === 'production' 
-    ? '' // In production, use relative URLs
-    : 'http://localhost:5000';
+  const API_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000';
 
   useEffect(() => {
     fetchBlog();
@@ -32,7 +33,7 @@ const EditBlog = () => {
         title: blog.title,
         description: blog.description,
         content: blog.content,
-        author: blog.author
+        author: blog.author,
       });
       setFetchingBlog(false);
     } catch (error) {
@@ -41,10 +42,10 @@ const EditBlog = () => {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (event) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [event.target.name]: event.target.value,
     });
   };
 
@@ -57,11 +58,11 @@ const EditBlog = () => {
     setGeneratingDescription(true);
     try {
       const response = await axios.post(`${API_URL}/api/generate-description`, {
-        title: formData.title
+        title: formData.title,
       });
       setFormData({
         ...formData,
-        description: response.data.description
+        description: response.data.description,
       });
     } catch (error) {
       console.error('Error generating description:', error);
@@ -71,9 +72,9 @@ const EditBlog = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
     if (!formData.title.trim() || !formData.description.trim() || !formData.content.trim()) {
       alert('Please fill in all required fields');
       return;
@@ -93,113 +94,81 @@ const EditBlog = () => {
 
   if (fetchingBlog) {
     return (
-      <div className="d-flex justify-content-center">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+      <div className='app-loading'>
+        <Card className='app-loading-card'>
+          <i className='fas fa-file-alt' aria-hidden='true'></i>
+          <p>Loading blog...</p>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div>
+    <div className='home-page'>
       <h1>Edit Blog</h1>
-      
-      <form onSubmit={handleSubmit} className="card p-4">
-        <div className="mb-3">
-          <label className="form-label">Title *</label>
-          <div className="input-group">
-            <input
-              type="text"
-              className="form-control"
-              name="title"
-              value={formData.title}
+      <Card>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <label className='form-label'>Title *</label>
+            <div className='form-actions' style={{ justifyContent: 'stretch' }}>
+              <Input
+                type='text'
+                name='title'
+                value={formData.title}
+                onChange={handleChange}
+                placeholder='Enter blog title'
+                required
+              />
+              <Button
+                type='button'
+                variant='outline'
+                onClick={generateDescription}
+                disabled={generatingDescription || !formData.title.trim()}
+              >
+                {generatingDescription ? 'Generating...' : 'Generate Description'}
+              </Button>
+            </div>
+
+            <label className='form-label'>Description *</label>
+            <Textarea
+              name='description'
+              value={formData.description}
               onChange={handleChange}
-              placeholder="Enter blog title"
+              rows='3'
+              placeholder='Enter blog description'
               required
             />
-            <button
-              type="button"
-              className="btn btn-outline-secondary"
-              onClick={generateDescription}
-              disabled={generatingDescription || !formData.title.trim()}
-            >
-              {generatingDescription ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2"></span>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <i className="fas fa-magic me-2"></i>
-                  Generate Description
-                </>
-              )}
-            </button>
-          </div>
-        </div>
 
-        <div className="mb-3">
-          <label className="form-label">Description *</label>
-          <textarea
-            className="form-control"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows="3"
-            placeholder="Enter blog description"
-            required
-          />
-        </div>
+            <label className='form-label'>Content *</label>
+            <Textarea
+              name='content'
+              value={formData.content}
+              onChange={handleChange}
+              rows='10'
+              placeholder='Write your blog content here...'
+              required
+            />
 
-        <div className="mb-3">
-          <label className="form-label">Content *</label>
-          <textarea
-            className="form-control"
-            name="content"
-            value={formData.content}
-            onChange={handleChange}
-            rows="10"
-            placeholder="Write your blog content here..."
-            required
-          />
-        </div>
+            <label className='form-label'>Author</label>
+            <Input
+              type='text'
+              name='author'
+              value={formData.author}
+              onChange={handleChange}
+              placeholder='Enter author name (optional)'
+            />
 
-        <div className="mb-3">
-          <label className="form-label">Author</label>
-          <input
-            type="text"
-            className="form-control"
-            name="author"
-            value={formData.author}
-            onChange={handleChange}
-            placeholder="Enter author name (optional)"
-          />
-        </div>
-
-        <div className="d-flex gap-2">
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2"></span>
-                Updating...
-              </>
-            ) : (
-              <>
-                <i className="fas fa-save me-2"></i>
-                Update Blog
-              </>
-            )}
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => navigate(`/blog/${id}`)}
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+            <div className='form-actions'>
+              <Button type='submit' disabled={loading}>
+                {loading ? 'Updating...' : 'Update Blog'}
+              </Button>
+              <Button type='button' variant='outline' onClick={() => navigate(`/blog/${id}`)}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

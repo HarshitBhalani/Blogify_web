@@ -31,11 +31,11 @@ mongoose.connect(process.env.MONGODB_URI, {
 });
 
 mongoose.connection.on('connected', () => {
-  console.log('✅ Connected to MongoDB');
+  console.log('[OK] Connected to MongoDB');
 });
 
 mongoose.connection.on('error', (err) => {
-  console.log('❌ MongoDB connection error:', err);
+  console.log('[ERROR] MongoDB connection error:', err);
 });
 
 // ================= BLOG SCHEMA =================
@@ -75,34 +75,106 @@ const generateDescription = async (title) => {
 };
 
 // ================= AI CONTENT =================
+const stripMarkdown = (text = '') =>
+  text
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`[^`]*`/g, ' ')
+    .replace(/!\[[^\]]*]\([^)]+\)/g, ' ')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+    .replace(/[#>*_~-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const ensureSection = (content, sectionTitle, fallbackBody) => {
+  const normalized = sectionTitle.toLowerCase();
+  const hasSection = content
+    .toLowerCase()
+    .includes(`## ${normalized}`);
+
+  if (hasSection) return content;
+  return `${content}\n\n## ${sectionTitle}\n${fallbackBody}`;
+};
+
+const normalizeAIContent = (title, rawContent = '') => {
+  let content = rawContent.trim();
+
+  // Remove fenced markdown wrappers if model returns full block as code.
+  content = content.replace(/^```markdown\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
+
+  if (!content.startsWith('#')) {
+    content = `# ${title}\n\n${content}`;
+  }
+
+  content = ensureSection(
+    content,
+    'Introduction',
+    `This article explains ${title} with practical context, examples, and actionable takeaways.`
+  );
+  content = ensureSection(
+    content,
+    'Key Points',
+    `- Core concept of ${title}\n- Benefits and limitations\n- Practical implementation guidance`
+  );
+  content = ensureSection(
+    content,
+    'Conclusion',
+    `In summary, ${title} can be applied effectively with clear goals and consistent execution.`
+  );
+
+  return content.trim();
+};
+
+const buildDescriptionFromContent = (title, content) => {
+  const plain = stripMarkdown(content);
+  if (!plain) return `A practical guide to ${title}.`;
+  return plain.slice(0, 170).trim() + (plain.length > 170 ? '...' : '');
+};
+
 const generateAIContent = async (title) => {
   try {
-    const prompt = `Write a comprehensive markdown blog about "${title}" with headings, lists, formatting and structured content.`;
+    const prompt = `
+Write a professional markdown blog post for the topic: "${title}".
+
+Return only markdown content (no code fences, no extra notes).
+Use this exact structure:
+# ${title}
+## Introduction
+## Key Points
+- bullet points
+## Practical Example
+## Conclusion
+
+Requirements:
+- 700 to 1000 words
+- clear paragraphs and readable language
+- include at least one numbered list and one bullet list
+- avoid placeholders like "lorem ipsum"
+`.trim();
 
     const message = await groq.chat.completions.create({
       messages: [{ role: 'user', content: prompt }],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
+      temperature: 0.5,
       max_tokens: 2000
     });
 
-    let content = message.choices[0]?.message?.content || '';
-
-    content = content.trim();
-
-    if (!content.startsWith('#')) {
-      content = `# ${title}\n\n${content}`;
-    }
-
-    return content;
+    const raw = message.choices[0]?.message?.content || '';
+    return normalizeAIContent(title, raw);
   } catch (error) {
     console.error('Groq content error:', error);
 
-    return `# ${title}
+    return normalizeAIContent(title, `# ${title}
 
-> Content generation temporarily unavailable.
+## Introduction
+Content generation is temporarily unavailable.
 
-Please try again later.`;
+## Key Points
+- Service is currently unavailable
+- Retry after a few moments
+- Check API key and provider status
+
+## Conclusion
+Please try again later.`);
   }
 };
 
@@ -125,16 +197,40 @@ app.post('/api/generate-description', async (req, res) => {
 app.post('/api/generate-content', async (req, res) => {
   try {
     const { title } = req.body;
-    if (!title) return res.status(400).json({ message: 'Title required' });
+    const normalizedTitle = (title || '').trim();
+    if (!normalizedTitle) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title required',
+        data: null
+      });
+    }
 
-    const content = await generateAIContent(title);
+    const content = await generateAIContent(normalizedTitle);
+    const description = buildDescriptionFromContent(normalizedTitle, content);
+    const payload = {
+      title: normalizedTitle,
+      description,
+      content,
+      contentType: 'markdown',
+      generatedAt: new Date().toISOString()
+    };
 
     res.json({
-      content,
-      contentType: 'markdown'
+      success: true,
+      message: 'Content generated successfully',
+      data: payload,
+      // Backward-compatible fields for current frontend
+      content: payload.content,
+      contentType: payload.contentType,
+      description: payload.description
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to generate content',
+      data: null
+    });
   }
 });
 
@@ -219,18 +315,18 @@ const keepAlive = () => {
   setInterval(async () => {
     try {
       const response = await fetch(`${RENDER_URL}/api/health`);
-      console.log(`✅ Keep-alive ping: ${response.status}`);
+      console.log(`[OK] Keep-alive ping: ${response.status}`);
     } catch (error) {
-      console.error("❌ Keep-alive failed:", error.message);
+      console.error("[ERROR] Keep-alive failed:", error.message);
     }
   }, 14 * 60 * 1000); // every 14 minutes
 };
 
 // ================= SERVER START =================
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🧠 Groq configured: ${!!process.env.GROQ_API_KEY}`);
-  console.log(`🗄 MongoDB connected: ${mongoose.connection.readyState === 1}`);
+  console.log(`[START] Server running on port ${PORT}`);
+  console.log(`[AI] Groq configured: ${!!process.env.GROQ_API_KEY}`);
+  console.log(`MongoDB connected: ${mongoose.connection.readyState === 1}`);
 
   keepAlive();
 });

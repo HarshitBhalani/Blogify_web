@@ -1,8 +1,8 @@
-# Blogify 📝
+# Blogify [Blog]
 
 A modern, responsive blog web application built with React.js that allows users to create, read, edit, and manage blog posts with a clean and intuitive interface.
 
-## 🌟 Features
+## [Features]
 
 - **AI-Powered Content Generation**: Integrated Gemini AI for automated blog content creation
 - **Blog Management**: Create, edit, and delete blog posts
@@ -13,7 +13,7 @@ A modern, responsive blog web application built with React.js that allows users 
 - **Modern UI**: Clean and contemporary design
 - **Performance Optimized**: Fast loading and smooth user experience
 
-## 🚀 Tech Stack
+## [Tech Stack]
 
 **Frontend:**
 - React.js
@@ -32,7 +32,7 @@ A modern, responsive blog web application built with React.js that allows users 
 - Web Vitals for performance monitoring
 - Jest for testing
 
-## 📁 Project Structure
+## [Project Structure]
 
 ```
 client/
@@ -65,7 +65,7 @@ client/
 └── package.json             # Duplicate package.json (should be cleaned up)
 ```
 
-## 🛠️ Components Overview
+## [Components Overview]
 
 ### Core Components
 
@@ -82,7 +82,7 @@ client/
 - **State Management**: Efficient React state handling
 - **Routing**: Seamless navigation between pages
 
-## 📦 Installation & Setup
+## [Installation & Setup]
 
 ### Prerequisites
 - Node.js (v14 or higher)
@@ -114,7 +114,7 @@ client/
 5. **Open your browser**
    Navigate to `http://localhost:3000`
 
-## 🎯 Available Scripts
+## [Available Scripts]
 
 In the project directory, you can run:
 
@@ -132,7 +132,7 @@ It correctly bundles React in production mode and optimizes the build for best p
 ### `npm run eject`
 **Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-## 🔧 Configuration
+## [Configuration]
 
 ### Package.json Dependencies
 The project includes essential dependencies for:
@@ -147,7 +147,7 @@ Make sure you have:
 - A code editor (VS Code recommended)
 - Git for version control
 
-## 📱 Features Breakdown
+## [Features Breakdown]
 
 ### 1. Blog Creation
 - Create new blog posts with title and content
@@ -171,14 +171,14 @@ Make sure you have:
 - User-friendly navigation bar
 - Breadcrumb navigation
 
-## 🎨 Styling
+## [Styling]
 
 - **CSS3**: Modern styling with flexbox and grid
 - **Responsive Design**: Mobile-first approach
 - **Clean UI**: Minimalist and user-friendly interface
 - **Consistent Theme**: Cohesive color scheme and typography
 
-## 🔮 Future Enhancements
+## [Future Enhancements]
 
 - Enhanced AI content generation with more customization options
 - User authentication system
@@ -190,7 +190,7 @@ Make sure you have:
 - Like/favorite features
 - AI-powered content optimization and SEO suggestions
 
-## 🤝 Contributing
+## [Contributing]
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
@@ -198,31 +198,31 @@ Make sure you have:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## 📄 License
+## [License]
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👨‍💻 Author
+## [Author]
 
 **Harshit Bhalani**
 - GitHub: [@HarshitBhalani](https://github.com/HarshitBhalani)
 - Project Link: [https://github.com/HarshitBhalani/Blogify_web](https://github.com/HarshitBhalani/Blogify_web)
 
-## 🙏 Acknowledgments
+## [Acknowledgments]
 
 - React.js team for the amazing framework
 - Create React App for the boilerplate
 - All contributors who helped improve this project
 
-## 📞 Support
+## [Support]
 
 If you have any questions or need help with setup, please open an issue in the GitHub repository.
 
 ---
 
-⭐ If you found this project helpful, please give it a star!
+If you found this project helpful, please give it a star.
 
-## 📝 Notes
+## [Notes]
 
 - Clean up duplicate `package.json` files in the root directory
 - Consider adding a backend server for full-stack functionality
