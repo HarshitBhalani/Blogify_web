@@ -24,14 +24,21 @@ export function Avatar({ name, size = 28 }) {
   );
 }
 
-export function Byline({ post, size = 28 }) {
+export function Byline({ post, size = 28, showUpdated = false }) {
+  const published = post.publishedAt || post.createdAt;
+  // Only mention an update when it happened on a later day than publishing.
+  const updated =
+    showUpdated && post.updatedAt && published && formatDate(post.updatedAt) !== formatDate(published)
+      ? formatDate(post.updatedAt)
+      : null;
   return (
     <span className="byline">
       <Avatar name={post.author} size={size} />
       <span className="byline-text">
         <span className="byline-name">{post.author}</span>
         <span className="byline-meta">
-          {formatDate(post.publishedAt || post.createdAt)} · {post.readingTime} min read
+          {formatDate(published)} · {post.readingTime} min read
+          {updated && <> · Updated {updated}</>}
         </span>
       </span>
     </span>

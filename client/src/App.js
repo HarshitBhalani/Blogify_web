@@ -71,13 +71,24 @@ function Header({ theme, toggleTheme }) {
 }
 
 function Footer() {
+  const { user } = useAuth();
   return (
     <footer className="site-footer">
-      <span className="brand-name">Blogify</span>
-      <span className="footer-links">
-        <a href="/rss.xml">RSS</a>
-        <a href="/sitemap.xml">Sitemap</a>
-      </span>
+      <div className="footer-inner">
+        <div className="footer-brand">
+          <Link to="/" className="brand" aria-label="Blogify home">
+            <img src="/blogify_favicon_transparent.png" alt="" className="brand-logo" />
+            <span className="brand-name">Blogify</span>
+          </Link>
+          <p>Stories drafted with AI and finished by the people who write them.</p>
+        </div>
+        <nav className="footer-links" aria-label="Footer">
+          <Link to="/">Home</Link>
+          <Link to={user ? '/write' : '/register'}>Write a post</Link>
+          {user ? <Link to="/me">My posts</Link> : <Link to="/login">Log in</Link>}
+        </nav>
+      </div>
+      <p className="footer-copy">© {new Date().getFullYear()} Blogify</p>
     </footer>
   );
 }

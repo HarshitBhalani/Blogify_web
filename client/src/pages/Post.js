@@ -234,10 +234,7 @@ export default function Post() {
           <h1 className="article-title">{post.title}</h1>
           {post.description && <p className="article-dek">{post.description}</p>}
           <div className="article-byline">
-            <Byline post={post} size={40} />
-            {post.updatedAt && post.publishedAt && new Date(post.updatedAt) - new Date(post.publishedAt) > 60000 && (
-              <span className="muted">Updated {formatDate(post.updatedAt)}</span>
-            )}
+            <Byline post={post} size={40} showUpdated />
           </div>
         </header>
 
